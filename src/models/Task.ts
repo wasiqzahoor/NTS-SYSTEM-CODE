@@ -3,7 +3,7 @@ import { ITask } from "@/types";
 
 type TaskDocument = ITask & Document;
 
-const TaskSchema = new Schema<TaskDocument>(
+const TaskSchema = new Schema(
   {
     title: {
       type: String,

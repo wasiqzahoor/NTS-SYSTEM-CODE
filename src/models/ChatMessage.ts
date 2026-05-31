@@ -3,7 +3,7 @@ import { IChatMessage } from "@/types";
 
 type ChatMessageDocument = IChatMessage & Document;
 
-const ChatMessageSchema = new Schema<ChatMessageDocument>(
+const ChatMessageSchema = new Schema(
   {
     taskId: {
       type: Schema.Types.ObjectId,

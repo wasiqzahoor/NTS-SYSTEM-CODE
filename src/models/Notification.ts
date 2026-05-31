@@ -3,7 +3,7 @@ import { INotification } from "@/types";
 
 type NotificationDocument = INotification & Document;
 
-const NotificationSchema = new Schema<NotificationDocument>(
+const NotificationSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,

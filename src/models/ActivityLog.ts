@@ -3,7 +3,7 @@ import { IActivityLog } from "@/types";
 
 type ActivityLogDocument = IActivityLog & Document;
 
-const ActivityLogSchema = new Schema<ActivityLogDocument>(
+const ActivityLogSchema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,

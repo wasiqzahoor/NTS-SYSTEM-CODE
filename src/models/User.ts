@@ -3,7 +3,7 @@ import { IUser } from "@/types";
 
 type UserDocument = IUser & Document;
 
-const UserSchema = new Schema<UserDocument>(
+const UserSchema = new Schema(
   {
     name: {
       type: String,

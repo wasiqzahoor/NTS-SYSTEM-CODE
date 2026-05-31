@@ -3,7 +3,7 @@ import { IProject } from "@/types";
 
 type ProjectDocument = IProject & Document;
 
-const ProjectSchema = new Schema<ProjectDocument>(
+const ProjectSchema = new Schema(
   {
     title: {
       type: String,
