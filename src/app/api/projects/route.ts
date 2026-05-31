@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
 
     if (global._io && staffIds?.length) {
       staffIds.forEach((staffId: string) => {
-        global._io.to(`user_${staffId}`).emit("task-updated", {
+        global._io?.to(`user_${staffId}`).emit("task-updated", {
           type: "new-project",
           project: populatedProject,
         });

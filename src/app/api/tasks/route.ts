@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
 
     // Real-time: notify assigned staff immediately
     if (global._io) {
-      global._io.to(`user_${assignedTo}`).emit("task-updated", {
+      global._io?.to(`user_${assignedTo}`).emit("task-updated", {
         type: "new-task",
         task: populatedTask,
       });
@@ -304,7 +304,7 @@ export async function PATCH(req: NextRequest) {
         updatedTask?.assignedBy?._id?.toString() || updatedTask?.assignedBy?.toString(),
       ].filter(Boolean);
       involvedUsers.forEach((uid) => {
-        global._io.to(`user_${uid}`).emit("task-updated", { type: "update", task: taskData });
+        global._io?.to(`user_${uid}`).emit("task-updated", { type: "update", task: taskData });
       });
     }
 

@@ -120,11 +120,11 @@ export async function POST(req: NextRequest) {
     });
 
     if (global._io) {
-      global._io.to(`user_${notifyUserId}`).emit("new-message", {
+      global._io?.to(`user_${notifyUserId}`).emit("new-message", {
         taskId,
         message: newMessage,
       });
-      global._io.emit(`task-chat-${taskId}`, newMessage);
+      global._io?.emit(`task-chat-${taskId}`, newMessage);
     }
 
     return NextResponse.json({ success: true, data: newMessage }, { status: 201 });
@@ -166,7 +166,7 @@ export async function DELETE(req: NextRequest) {
       await ChatMessage.findByIdAndUpdate(messageId, { deletedForEveryone: true });
 
       if (global._io) {
-        global._io.emit(`message-deleted-${msg.taskId}`, { messageId, deleteFor: "everyone" });
+        global._io?.emit(`message-deleted-${msg.taskId}`, { messageId, deleteFor: "everyone" });
       }
     } else {
       await ChatMessage.findByIdAndUpdate(messageId, {
