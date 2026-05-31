@@ -178,7 +178,7 @@ export default function SettingsPage() {
         open: true,
         title: "Error",
         description: error.message || "Something went wrong.",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsLoadingForgot(false);
