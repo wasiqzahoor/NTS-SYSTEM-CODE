@@ -699,7 +699,7 @@ export default function ProjectsPage() {
         title="Complete Project"
         description={`Are you sure you want to mark "${confirmComplete.title}" as complete? It will be moved to History and staff will be notified.`}
         confirmLabel="Yes, Complete"
-        variant="default"
+        variant="success"
         onConfirm={() => completeProject(confirmComplete.id)}
       />
 
@@ -710,7 +710,7 @@ export default function ProjectsPage() {
         title="Restore Project"
         description={`Restore "${confirmRestore.title}" from history back to active? Staff members will be re-added to the project.`}
         confirmLabel="Yes, Restore"
-        variant="default"
+        variant="info"
         onConfirm={() => restoreProject(confirmRestore.id)}
       />
 
