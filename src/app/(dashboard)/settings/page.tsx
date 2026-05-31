@@ -427,64 +427,52 @@ export default function SettingsPage() {
       </Card>
 
 
-     {/* Forgot Password Section */}
-<Card className="border-amber-500/20 dark:border-amber-500/15">
-  <CardHeader>
-    <CardTitle className="flex items-center gap-2 text-base">
-      <MailCheck className="w-4 h-4 text-amber-500" />
-      Forgot Your Password?
-    </CardTitle>
-    <CardDescription>
-      If you have forgotten your current password, a new password will be generated and sent to your email address.
-    </CardDescription>
-  </CardHeader>
-
-  <CardContent>
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/15">
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-amber-500/10 flex-shrink-0">
-          <MailCheck className="w-4 h-4 text-amber-500" />
-        </div>
-        <div>
-          <p className="text-sm font-medium text-foreground">
-            Reset via Email
+      {/* Forgot Password Section */}
+      <Card className="border-amber-500/20 dark:border-amber-500/15">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <MailCheck className="w-4 h-4 text-amber-500" />
+            Forgot Your Password?
+          </CardTitle>
+          <CardDescription>
+            Agar aap apna current password bhool gaye hain — ek naya password generate karke aapki email par bhej diya jayega.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/15">
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-amber-500/10 flex-shrink-0">
+                <MailCheck className="w-4 h-4 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Reset via Email</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Nayi password{" "}
+                  <span className="font-semibold text-foreground">{session?.user?.email}</span>{" "}
+                  par send hogi
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={forgotPassword}
+              disabled={isLoadingForgot}
+              className="gap-2 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/50 flex-shrink-0"
+            >
+              {isLoadingForgot ? (
+                <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Sending…</>
+              ) : (
+                <><MailCheck className="w-3.5 h-3.5" /> Send New Password</>
+              )}
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground mt-3 flex items-center gap-1.5">
+            <Shield className="w-3 h-3" />
+            Password reset hone ke baad login karke immediately Settings mein ja kar change kar lein.
           </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            A new password will be sent to{" "}
-            <span className="font-semibold text-foreground">
-              {session?.user?.email}
-            </span>
-          </p>
-        </div>
-      </div>
-
-      <Button
-        type="button"
-        variant="outline"
-        onClick={forgotPassword}
-        disabled={isLoadingForgot}
-        className="gap-2 border-amber-500/30 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 hover:border-amber-500/50 flex-shrink-0"
-      >
-        {isLoadingForgot ? (
-          <>
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-            Sending...
-          </>
-        ) : (
-          <>
-            <MailCheck className="w-3.5 h-3.5" />
-            Send New Password
-          </>
-        )}
-      </Button>
-    </div>
-
-    <p className="text-[11px] text-muted-foreground mt-3 flex items-center gap-1.5">
-      <Shield className="w-3 h-3" />
-      After resetting your password, please log in and change it immediately from the Settings page for security purposes.
-    </p>
-  </CardContent>
-</Card>
+        </CardContent>
+      </Card>
 
       {/* Alert Modal */}
       <AlertModal

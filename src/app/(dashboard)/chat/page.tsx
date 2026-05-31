@@ -52,8 +52,10 @@ export default function ChatPage() {
       const data = await res.json();
       if (data.success) {
         setTasks(data.data);
-        if (data.data.length > 0 && !selectedTask) {
-          setSelectedTask(data.data[0]);
+        // Auto-select first active (non-finished) task
+        const firstActive = data.data.find((t: Task) => t.status !== "finished");
+        if (firstActive && !selectedTask) {
+          setSelectedTask(firstActive);
         }
       }
     } catch (error) {
@@ -63,7 +65,11 @@ export default function ChatPage() {
     }
   };
 
-  const filteredTasks = tasks.filter((task) =>
+  // Only show active tasks (not finished) in Messages list
+  // Finished task chats are still accessible from the task detail page
+  const activeTasks = tasks.filter((task) => task.status !== "finished");
+
+  const filteredTasks = activeTasks.filter((task) =>
     task.title.toLowerCase().includes(search.toLowerCase()) ||
     task.projectId?.title?.toLowerCase().includes(search.toLowerCase())
   );
@@ -220,7 +226,7 @@ export default function ChatPage() {
             </div>
 
             <div className="flex-1 overflow-hidden">
-              <TaskChat taskId={selectedTask._id} />
+              <TaskChat taskId={selectedTask._id} isReadOnly={selectedTask.status === "finished"} />
             </div>
           </>
         ) : (

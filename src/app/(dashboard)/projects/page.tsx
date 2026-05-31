@@ -68,7 +68,10 @@ export default function ProjectsPage() {
   useEffect(() => {
     fetchProjects();
     if (session?.user.role === "manager") fetchStaff();
-    if (session?.user.role === "super_admin") fetchManagers();
+    if (session?.user.role === "super_admin") {
+      fetchStaff();
+      fetchManagers();
+    }
   }, [session]);
 
   const fetchProjects = async () => {
@@ -251,7 +254,7 @@ export default function ProjectsPage() {
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => setViewMode("grid")}>Grid View</Button>
             <Button variant="primary" onClick={() => setViewMode("gantt")}>Gantt View</Button>
-            {session?.user.role === "manager" && (
+            {(session?.user.role === "manager" || session?.user.role === "super_admin") && (
               <Button variant="primary" onClick={() => setShowCreateDialog(true)}>
                 <Plus className="w-4 h-4 mr-2" /> New Project
               </Button>

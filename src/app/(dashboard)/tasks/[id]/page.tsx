@@ -424,7 +424,7 @@ export default function TaskDetailPage() {
         {/* Right Column — Chat + Activity */}
         <div className="space-y-6">
           <div style={{ height: "520px" }} className="flex flex-col overflow-hidden rounded-xl border border-border/60">
-            <TaskChat taskId={taskId} />
+            <TaskChat taskId={taskId} isReadOnly={task?.status === "finished"} />
           </div>
 
           <Card>

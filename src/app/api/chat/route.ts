@@ -86,6 +86,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Block sending messages on finished tasks — chat is archived/read-only
+    if (task.status === "finished") {
+      return NextResponse.json(
+        { error: "This task is finished. Chat is archived and read-only." },
+        { status: 403 }
+      );
+    }
+
     const newMessage = await ChatMessage.create({
       taskId,
       senderId: session.user.id,

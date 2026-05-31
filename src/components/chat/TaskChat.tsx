@@ -19,7 +19,7 @@ interface Message {
   createdAt: string;
 }
 
-export default function TaskChat({ taskId }: { taskId: string }) {
+export default function TaskChat({ taskId, isReadOnly = false }: { taskId: string; isReadOnly?: boolean }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -176,10 +176,15 @@ export default function TaskChat({ taskId }: { taskId: string }) {
         <div className="text-sm font-semibold flex items-center gap-2 text-foreground">
           <MessageSquare className="w-4 h-4 text-nts-cyan" />
           Task Discussion
+          {isReadOnly && (
+            <span className="ml-1 text-[10px] px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 font-medium border border-yellow-500/20">
+              Archived — Read Only
+            </span>
+          )}
           {isMounted && (
             <span
-              className={cn("ml-auto w-2 h-2 rounded-full", isConnected ? "bg-green-500" : "bg-gray-400")}
-              title={isConnected ? "Connected" : "Disconnected"}
+              className={cn("ml-auto w-2 h-2 rounded-full", isReadOnly ? "bg-gray-400" : isConnected ? "bg-green-500" : "bg-gray-400")}
+              title={isReadOnly ? "Chat archived" : isConnected ? "Connected" : "Disconnected"}
             />
           )}
         </div>
@@ -283,57 +288,66 @@ export default function TaskChat({ taskId }: { taskId: string }) {
         </div>
       )}
 
-      {/* Input */}
-      <form
-        onSubmit={sendMessage}
-        className="p-3 border-t border-border/60 flex gap-2 flex-shrink-0"
-      >
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,video/*"
-          className="hidden"
-          onChange={handleFileUpload}
-        />
-
-        {/* Media upload button */}
-        <button
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className="flex-shrink-0 p-2 rounded-lg text-muted-foreground hover:text-nts-cyan hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          title="Send image or video"
+      {/* Input — hidden when read-only */}
+      {isReadOnly ? (
+        <div className="p-3 border-t border-border/60 flex-shrink-0">
+          <div className="flex items-center justify-center gap-2 py-1.5 px-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-400 text-xs font-medium">
+            <MessageSquare className="w-3.5 h-3.5" />
+            This task is finished — chat is archived and read-only
+          </div>
+        </div>
+      ) : (
+        <form
+          onSubmit={sendMessage}
+          className="p-3 border-t border-border/60 flex gap-2 flex-shrink-0"
         >
-          {isUploading ? (
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-nts-cyan" />
-          ) : (
-            <ImageIcon className="w-4 h-4" />
-          )}
-        </button>
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,video/*"
+            className="hidden"
+            onChange={handleFileUpload}
+          />
 
-        <Input
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type a message..."
-          className="flex-1"
-          disabled={isSending}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              sendMessage();
-            }
-          }}
-        />
-        <Button
-          type="submit"
-          size="icon"
-          className="flex-shrink-0 bg-nts-cyan hover:bg-nts-cyan/80 text-white"
-          disabled={isSending || (!newMessage.trim() && !previewMedia)}
-        >
-          <Send className="w-4 h-4" />
-        </Button>
-      </form>
+          {/* Media upload button */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="flex-shrink-0 p-2 rounded-lg text-muted-foreground hover:text-nts-cyan hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            title="Send image or video"
+          >
+            {isUploading ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-nts-cyan" />
+            ) : (
+              <ImageIcon className="w-4 h-4" />
+            )}
+          </button>
+
+          <Input
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1"
+            disabled={isSending}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+              }
+            }}
+          />
+          <Button
+            type="submit"
+            size="icon"
+            className="flex-shrink-0 bg-nts-cyan hover:bg-nts-cyan/80 text-white"
+            disabled={isSending || (!newMessage.trim() && !previewMedia)}
+          >
+            <Send className="w-4 h-4" />
+          </Button>
+        </form>
+      )}
     </div>
   );
 }

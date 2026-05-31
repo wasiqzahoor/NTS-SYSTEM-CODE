@@ -27,7 +27,7 @@ interface Task {
   _id: string;
   title: string;
   description: string;
-  status: "todo" | "in_progress" | "completed" | "revision_requested";
+  status: "todo" | "in_progress" | "completed" | "revision_requested" | "finished";
   priority: "low" | "medium" | "high";
   assignedTo?: { name: string; avatar?: string };
   dueDate?: string;
@@ -86,8 +86,8 @@ export default function KanbanBoard({ projectId }: { projectId?: string }) {
 
     const newStatus = destination.droppableId as Task["status"];
 
-    // Optimistic update
-    const newColumns = [...columns];
+    // Optimistic update (deep copy to avoid mutating state directly)
+    const newColumns = columns.map((col) => ({ ...col, tasks: [...col.tasks] }));
     const sourceColumn = newColumns.find((c) => c.id === source.droppableId);
     const destColumn = newColumns.find((c) => c.id === destination.droppableId);
 

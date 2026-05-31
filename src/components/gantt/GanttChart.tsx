@@ -18,9 +18,14 @@ export default function GanttChart({ projects }: { projects: Project[] }) {
   const [timelineWidth, setTimelineWidth] = useState(0);
 
   useEffect(() => {
-    if (containerRef.current) {
-      setTimelineWidth(containerRef.current.offsetWidth - 200);
-    }
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setTimelineWidth(containerRef.current.offsetWidth - 200);
+      }
+    };
+    updateWidth();
+    window.addEventListener("resize", updateWidth);
+    return () => window.removeEventListener("resize", updateWidth);
   }, []);
 
   if (!projects || projects.length === 0) {
@@ -42,7 +47,7 @@ export default function GanttChart({ projects }: { projects: Project[] }) {
   minDate.setDate(minDate.getDate() - 7);
   maxDate.setDate(maxDate.getDate() + 7);
 
-  const totalDays = (maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24);
+  const totalDays = Math.max((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24), 1);
 
   const getPosition = (date: string) => {
     const d = new Date(date);
