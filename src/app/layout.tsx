@@ -34,17 +34,12 @@ export const metadata: Metadata = {
   // ─── Favicon ──────────────────────────────────────────────────────────────
   icons: {
     icon: [
+      { url: "/favicon.ico" },
       { url: "/logo.png", type: "image/png" },
     ],
     apple: "/logo.png",
-    shortcut: "/logo.png",
+    shortcut: "/favicon.ico",
   },
-
-  // ─── Google Search Console Verification ───────────────────────────────────
-  // Search Console → Add Property → HTML tag → content value yahan paste karo
-  // verification: {
-  //   google: "APNA_VERIFICATION_CODE_YAHAN",
-  // },
 
   // ─── Open Graph (Social Sharing) ──────────────────────────────────────────
   openGraph: {
