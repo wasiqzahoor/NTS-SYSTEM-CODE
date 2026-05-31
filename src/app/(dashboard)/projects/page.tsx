@@ -35,13 +35,16 @@ import { ConfirmModal } from "@/components/ui/confirm-modal";
 import GanttChart from "@/components/gantt/GanttChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+type ViewMode = "grid" | "gantt";
+type ActiveTab = "active" | "history";
+
 export default function ProjectsPage() {
   const { data: session } = useSession();
   const [activeProjects, setActiveProjects] = useState<any[]>([]);
   const [historyProjects, setHistoryProjects] = useState<any[]>([]);
   const [staff, setStaff] = useState<any[]>([]);
-  const [viewMode, setViewMode] = useState<"grid" | "gantt">("grid");
-  const [activeTab, setActiveTab] = useState<"active" | "history">("active");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [activeTab, setActiveTab] = useState<ActiveTab>("active");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedProject, setSelectedProject] = useState<any>(null);
@@ -216,14 +219,14 @@ export default function ProjectsPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const variants: any = {
+    const variants: Record<string, { variant: string; label: string }> = {
       active: { variant: "info", label: "Active" },
       completed: { variant: "success", label: "Completed" },
       on_hold: { variant: "warning", label: "On Hold" },
       inactive: { variant: "default", label: "Inactive" },
     };
     const config = variants[status] || variants.active;
-    return <Badge variant={config.variant}>{config.label}</Badge>;
+    return <Badge variant={config.variant as any}>{config.label}</Badge>;
   };
 
   const toggleStaffSelection = (staffId: string, isEdit = false) => {
@@ -242,42 +245,33 @@ export default function ProjectsPage() {
   };
 
   const projects = activeTab === "active" ? activeProjects : historyProjects;
-
-  if (viewMode === "gantt") {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-bold text-foreground tracking-tight">Projects</h1>
-            <p className="text-muted-foreground mt-1">View project timelines</p>
-          </div>
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={() => setViewMode("grid")}>Grid View</Button>
-            <Button variant="primary" onClick={() => setViewMode("gantt")}>Gantt View</Button>
-            {(session?.user.role === "manager" || session?.user.role === "super_admin") && (
-              <Button variant="primary" onClick={() => setShowCreateDialog(true)}>
-                <Plus className="w-4 h-4 mr-2" /> New Project
-              </Button>
-            )}
-          </div>
-        </div>
-        <GanttChart projects={activeProjects} />
-      </div>
-    );
-  }
+  const isGantt = viewMode === "gantt";
 
   return (
     <div className="space-y-6">
+
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-xl font-bold text-foreground tracking-tight">Projects</h1>
-          <p className="text-muted-foreground mt-1">Manage all your projects</p>
+          <p className="text-muted-foreground mt-1">
+            {isGantt ? "View project timelines" : "Manage all your projects"}
+          </p>
         </div>
         <div className="flex gap-3 flex-wrap">
-          <Button variant={viewMode === "grid" ? "primary" : "outline"} onClick={() => setViewMode("grid")}>Grid View</Button>
-          <Button variant={viewMode === "gantt" ? "primary" : "outline"} onClick={() => setViewMode("gantt")}>Gantt View</Button>
-          {session?.user.role === "manager" && (
+          <Button
+            variant={isGantt ? "outline" : "primary"}
+            onClick={() => setViewMode("grid")}
+          >
+            Grid View
+          </Button>
+          <Button
+            variant={isGantt ? "primary" : "outline"}
+            onClick={() => setViewMode("gantt")}
+          >
+            Gantt View
+          </Button>
+          {isManagerOrAdmin && (
             <Button variant="primary" onClick={() => setShowCreateDialog(true)}>
               <Plus className="w-4 h-4 mr-2" /> New Project
             </Button>
@@ -285,235 +279,258 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-accent rounded-xl p-1 w-fit">
-        <button
-          onClick={() => setActiveTab("active")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            activeTab === "active"
-              ? "bg-white dark:bg-nts-dark-card text-nts-cyan shadow-sm"
-              : "text-muted-foreground hover:text-gray-700"
-          }`}
-        >
-          <FolderKanban className="w-4 h-4" />
-          Active Projects
-          {activeProjects.length > 0 && (
-            <span className="bg-nts-cyan/20 text-nts-cyan text-xs rounded-full px-2 py-0.5">{activeProjects.length}</span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab("history")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-            activeTab === "history"
-              ? "bg-white dark:bg-nts-dark-card text-emerald-500 shadow-sm"
-              : "text-muted-foreground hover:text-gray-700"
-          }`}
-        >
-          <History className="w-4 h-4" />
-          History
-          {historyProjects.length > 0 && (
-            <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 text-xs rounded-full px-2 py-0.5">{historyProjects.length}</span>
-          )}
-        </button>
-      </div>
+      {/* Gantt View */}
+      {isGantt && (
+        <GanttChart projects={activeProjects} />
+      )}
 
-      {/* Projects Grid */}
-      {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nts-cyan" />
-        </div>
-      ) : projects.length === 0 ? (
-        <Card>
-          <CardContent className="p-12 text-center">
-            {activeTab === "history" ? (
-              <>
-                <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No completed projects yet</h3>
-                <p className="text-muted-foreground">Completed projects will appear here</p>
-              </>
-            ) : (
-              <>
-                <FolderKanban className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No projects yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  {session?.user.role === "manager" ? "Create your first project to get started" : "No projects assigned yet"}
-                </p>
-                {session?.user.role === "manager" && (
-                  <Button variant="primary" onClick={() => setShowCreateDialog(true)}>
-                    <Plus className="w-4 h-4 mr-2" /> Create Project
-                  </Button>
+      {/* Grid View */}
+      {!isGantt && (
+        <>
+          {/* Tabs */}
+          <div className="flex gap-1 bg-accent rounded-xl p-1 w-fit">
+            <button
+              onClick={() => setActiveTab("active")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === "active"
+                  ? "bg-white dark:bg-nts-dark-card text-nts-cyan shadow-sm"
+                  : "text-muted-foreground hover:text-gray-700"
+              }`}
+            >
+              <FolderKanban className="w-4 h-4" />
+              Active Projects
+              {activeProjects.length > 0 && (
+                <span className="bg-nts-cyan/20 text-nts-cyan text-xs rounded-full px-2 py-0.5">
+                  {activeProjects.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("history")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                activeTab === "history"
+                  ? "bg-white dark:bg-nts-dark-card text-emerald-500 shadow-sm"
+                  : "text-muted-foreground hover:text-gray-700"
+              }`}
+            >
+              <History className="w-4 h-4" />
+              History
+              {historyProjects.length > 0 && (
+                <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 text-xs rounded-full px-2 py-0.5">
+                  {historyProjects.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Projects Grid */}
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nts-cyan" />
+            </div>
+          ) : projects.length === 0 ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                {activeTab === "history" ? (
+                  <>
+                    <History className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">No completed projects yet</h3>
+                    <p className="text-muted-foreground">Completed projects will appear here</p>
+                  </>
+                ) : (
+                  <>
+                    <FolderKanban className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-foreground mb-2">No projects yet</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {session?.user.role === "manager" ? "Create your first project to get started" : "No projects assigned yet"}
+                    </p>
+                    {session?.user.role === "manager" && (
+                      <Button variant="primary" onClick={() => setShowCreateDialog(true)}>
+                        <Plus className="w-4 h-4 mr-2" /> Create Project
+                      </Button>
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projects.map((project) => (
-            <Card key={project._id} className={`hover:shadow-lg transition-shadow ${activeTab === "history" ? "border-emerald-200 dark:border-emerald-900/40" : ""}`}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0 pr-2">
-                    <CardTitle className="text-lg truncate">{project.title}</CardTitle>
-                    <CardDescription className="line-clamp-2 mt-1">{project.description}</CardDescription>
-                  </div>
-                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    {getStatusBadge(project.status)}
-                    {activeTab === "history" && (
-                      <Badge variant="success" className="text-xs">
-                        <CheckCheck className="w-3 h-3 mr-1" /> Finished
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date(project.startDate).toLocaleDateString()} - {new Date(project.endDate).toLocaleDateString()}</span>
-                  </div>
-                  {activeTab === "history" && project.completedAt && (
-                    <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Completed: {new Date(project.completedAt).toLocaleDateString()}
-                        {project.completedBy?.name && ` by ${project.completedBy.name}`}
-                      </span>
-                    </div>
-                  )}
-                  {activeTab === "history" ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Users className="w-4 h-4" />
-                      <span>{(project.archivedStaffIds?.length || 0)} team members</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Users className="w-4 h-4" />
-                      <span>{project.staffIds?.length || 0} team members</span>
-                    </div>
-                  )}
-
-                  {/* Staff avatars */}
-                  <div className="flex items-center gap-2">
-                    {(activeTab === "history" ? [] : project.staffIds)?.slice(0, 3).map((s: any, i: number) => (
-                      <div
-                        key={i}
-                        className="w-7 h-7 rounded-full bg-gradient-to-br from-nts-cyan to-nts-blue-magenta flex items-center justify-center text-white text-xs font-bold"
-                        title={typeof s === "string" ? s : s.name}
-                      >
-                        {typeof s === "string" ? "?" : s.name?.charAt(0)}
-                      </div>
-                    ))}
-                    {activeTab !== "history" && project.staffIds?.length > 3 && (
-                      <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-muted-foreground">
-                        +{project.staffIds.length - 3}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex gap-2 pt-2 flex-wrap">
-                    {activeTab === "history" ? (
-                      <>
-                        <Link href={`/projects/${project._id}`} className="flex-1">
-                          <Button variant="outline" className="w-full gap-2">
-                            <Eye className="w-4 h-4" /> View
-                          </Button>
-                        </Link>
-                        {isManagerOrAdmin && (
-                          <Button
-                            variant="outline"
-                            className="gap-2 text-emerald-600 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-                            onClick={() => setConfirmRestore({ open: true, id: project._id, title: project.title })}
-                          >
-                            <RotateCcw className="w-4 h-4" /> Restore
-                          </Button>
-                        )}
-                        {(session?.user.role === "manager" || session?.user.role === "super_admin") && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setConfirmDelete({ open: true, id: project._id, title: project.title })}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <Link href={`/projects/${project._id}`} className="flex-1">
-                          <Button variant="primary" className="w-full gap-2">
-                            <Eye className="w-4 h-4" /> Details
-                          </Button>
-                        </Link>
-                        <Link href={`/tasks?projectId=${project._id}`} className="flex-1">
-                          <Button variant="outline" className="w-full gap-2">
-                            <ClipboardList className="w-4 h-4" /> Tasks
-                          </Button>
-                        </Link>
-                        {isManagerOrAdmin && (
-                          <>
-                            {/* Status toggle */}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title={project.status === "active" ? "Set Inactive" : "Set Active"}
-                              onClick={() => toggleProjectStatus(project)}
-                              className={project.status === "active" ? "text-green-500" : "text-muted-foreground"}
-                            >
-                              {project.status === "active"
-                                ? <ToggleRight className="w-5 h-5" />
-                                : <ToggleLeft className="w-5 h-5" />
-                              }
-                            </Button>
-                            {/* Complete */}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              title="Mark as Complete"
-                              onClick={() => setConfirmComplete({ open: true, id: project._id, title: project.title })}
-                              className="text-emerald-500 hover:text-emerald-600"
-                            >
-                              <CheckCircle2 className="w-4 h-4" />
-                            </Button>
-                            {session?.user.role === "manager" && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => { setSelectedProject(project); setShowEditDialog(true); }}
-                              >
-                                <Edit3 className="w-4 h-4" />
-                              </Button>
-                            )}
-                            {session?.user.role === "super_admin" && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                title="Reassign project manager"
-                                onClick={() => { setProjectToReassign(project); setReassignProjectManagerId(""); setShowReassignProjectDialog(true); }}
-                              >
-                                <RefreshCw className="w-4 h-4 text-blue-500" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setConfirmDelete({ open: true, id: project._id, title: project.title })}
-                              className="text-red-500 hover:text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projects.map((project) => (
+                <Card
+                  key={project._id}
+                  className={`hover:shadow-lg transition-shadow ${activeTab === "history" ? "border-emerald-200 dark:border-emerald-900/40" : ""}`}
+                >
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <CardTitle className="text-lg truncate">{project.title}</CardTitle>
+                        <CardDescription className="line-clamp-2 mt-1">{project.description}</CardDescription>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        {getStatusBadge(project.status)}
+                        {activeTab === "history" && (
+                          <Badge variant="success" className="text-xs">
+                            <CheckCheck className="w-3 h-3 mr-1" /> Finished
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          {new Date(project.startDate).toLocaleDateString()} -{" "}
+                          {new Date(project.endDate).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {activeTab === "history" && project.completedAt && (
+                        <div className="flex items-center gap-2 text-sm text-emerald-600 dark:text-emerald-400">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>
+                            Completed: {new Date(project.completedAt).toLocaleDateString()}
+                            {project.completedBy?.name && ` by ${project.completedBy.name}`}
+                          </span>
+                        </div>
+                      )}
+                      {activeTab === "history" ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Users className="w-4 h-4" />
+                          <span>{project.archivedStaffIds?.length || 0} team members</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Users className="w-4 h-4" />
+                          <span>{project.staffIds?.length || 0} team members</span>
+                        </div>
+                      )}
+
+                      {/* Staff avatars */}
+                      <div className="flex items-center gap-2">
+                        {(activeTab === "history" ? [] : project.staffIds)?.slice(0, 3).map((s: any, i: number) => (
+                          <div
+                            key={i}
+                            className="w-7 h-7 rounded-full bg-gradient-to-br from-nts-cyan to-nts-blue-magenta flex items-center justify-center text-white text-xs font-bold"
+                            title={typeof s === "string" ? s : s.name}
+                          >
+                            {typeof s === "string" ? "?" : s.name?.charAt(0)}
+                          </div>
+                        ))}
+                        {activeTab !== "history" && project.staffIds?.length > 3 && (
+                          <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs text-muted-foreground">
+                            +{project.staffIds.length - 3}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex gap-2 pt-2 flex-wrap">
+                        {activeTab === "history" ? (
+                          <>
+                            <Link href={`/projects/${project._id}`} className="flex-1">
+                              <Button variant="outline" className="w-full gap-2">
+                                <Eye className="w-4 h-4" /> View
+                              </Button>
+                            </Link>
+                            {isManagerOrAdmin && (
+                              <Button
+                                variant="outline"
+                                className="gap-2 text-emerald-600 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                                onClick={() => setConfirmRestore({ open: true, id: project._id, title: project.title })}
+                              >
+                                <RotateCcw className="w-4 h-4" /> Restore
+                              </Button>
+                            )}
+                            {isManagerOrAdmin && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setConfirmDelete({ open: true, id: project._id, title: project.title })}
+                                className="text-red-500 hover:text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <Link href={`/projects/${project._id}`} className="flex-1">
+                              <Button variant="primary" className="w-full gap-2">
+                                <Eye className="w-4 h-4" /> Details
+                              </Button>
+                            </Link>
+                            <Link href={`/tasks?projectId=${project._id}`} className="flex-1">
+                              <Button variant="outline" className="w-full gap-2">
+                                <ClipboardList className="w-4 h-4" /> Tasks
+                              </Button>
+                            </Link>
+                            {isManagerOrAdmin && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title={project.status === "active" ? "Set Inactive" : "Set Active"}
+                                  onClick={() => toggleProjectStatus(project)}
+                                  className={project.status === "active" ? "text-green-500" : "text-muted-foreground"}
+                                >
+                                  {project.status === "active"
+                                    ? <ToggleRight className="w-5 h-5" />
+                                    : <ToggleLeft className="w-5 h-5" />
+                                  }
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Mark as Complete"
+                                  onClick={() => setConfirmComplete({ open: true, id: project._id, title: project.title })}
+                                  className="text-emerald-500 hover:text-emerald-600"
+                                >
+                                  <CheckCircle2 className="w-4 h-4" />
+                                </Button>
+                                {session?.user.role === "manager" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => { setSelectedProject(project); setShowEditDialog(true); }}
+                                  >
+                                    <Edit3 className="w-4 h-4" />
+                                  </Button>
+                                )}
+                                {session?.user.role === "super_admin" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    title="Reassign project manager"
+                                    onClick={() => {
+                                      setProjectToReassign(project);
+                                      setReassignProjectManagerId("");
+                                      setShowReassignProjectDialog(true);
+                                    }}
+                                  >
+                                    <RefreshCw className="w-4 h-4 text-blue-500" />
+                                  </Button>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setConfirmDelete({ open: true, id: project._id, title: project.title })}
+                                  className="text-red-500 hover:text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </>
       )}
 
       {/* Create Project Dialog */}
@@ -526,7 +543,12 @@ export default function ProjectsPage() {
           <form onSubmit={createProject} className="space-y-4">
             <div>
               <label className="text-sm font-medium">Title</label>
-              <Input value={newProject.title} onChange={(e) => setNewProject({ ...newProject, title: e.target.value })} placeholder="Project title" required />
+              <Input
+                value={newProject.title}
+                onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                placeholder="Project title"
+                required
+              />
             </div>
             <div>
               <label className="text-sm font-medium">Description</label>
@@ -541,11 +563,21 @@ export default function ProjectsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium">Start Date</label>
-                <Input type="date" value={newProject.startDate} onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })} required />
+                <Input
+                  type="date"
+                  value={newProject.startDate}
+                  onChange={(e) => setNewProject({ ...newProject, startDate: e.target.value })}
+                  required
+                />
               </div>
               <div>
                 <label className="text-sm font-medium">End Date</label>
-                <Input type="date" value={newProject.endDate} onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })} required />
+                <Input
+                  type="date"
+                  value={newProject.endDate}
+                  onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
+                  required
+                />
               </div>
             </div>
             <div>
@@ -553,8 +585,15 @@ export default function ProjectsPage() {
               <div className="mt-2 space-y-2 max-h-[150px] overflow-y-auto">
                 {staff.map((s) => (
                   <label key={s._id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-accent cursor-pointer">
-                    <input type="checkbox" checked={newProject.staffIds.includes(s._id)} onChange={() => toggleStaffSelection(s._id)} className="rounded border-gray-300" />
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-nts-cyan to-nts-blue-magenta flex items-center justify-center text-white text-xs font-bold">{s.name.charAt(0)}</div>
+                    <input
+                      type="checkbox"
+                      checked={newProject.staffIds.includes(s._id)}
+                      onChange={() => toggleStaffSelection(s._id)}
+                      className="rounded border-gray-300"
+                    />
+                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-nts-cyan to-nts-blue-magenta flex items-center justify-center text-white text-xs font-bold">
+                      {s.name.charAt(0)}
+                    </div>
                     <span className="text-sm">{s.name}</span>
                   </label>
                 ))}
@@ -576,7 +615,11 @@ export default function ProjectsPage() {
             <form onSubmit={updateProject} className="space-y-4">
               <div>
                 <label className="text-sm font-medium">Title</label>
-                <Input value={selectedProject.title} onChange={(e) => setSelectedProject({ ...selectedProject, title: e.target.value })} required />
+                <Input
+                  value={selectedProject.title}
+                  onChange={(e) => setSelectedProject({ ...selectedProject, title: e.target.value })}
+                  required
+                />
               </div>
               <div>
                 <label className="text-sm font-medium">Description</label>
@@ -590,16 +633,30 @@ export default function ProjectsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium">Start Date</label>
-                  <Input type="date" value={selectedProject.startDate?.split("T")[0]} onChange={(e) => setSelectedProject({ ...selectedProject, startDate: e.target.value })} required />
+                  <Input
+                    type="date"
+                    value={selectedProject.startDate?.split("T")[0]}
+                    onChange={(e) => setSelectedProject({ ...selectedProject, startDate: e.target.value })}
+                    required
+                  />
                 </div>
                 <div>
                   <label className="text-sm font-medium">End Date</label>
-                  <Input type="date" value={selectedProject.endDate?.split("T")[0]} onChange={(e) => setSelectedProject({ ...selectedProject, endDate: e.target.value })} required />
+                  <Input
+                    type="date"
+                    value={selectedProject.endDate?.split("T")[0]}
+                    onChange={(e) => setSelectedProject({ ...selectedProject, endDate: e.target.value })}
+                    required
+                  />
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium">Status</label>
-                <select value={selectedProject.status} onChange={(e) => setSelectedProject({ ...selectedProject, status: e.target.value })} className="w-full h-10 rounded-2xl border border-gray-300 dark:border-border/60 bg-white dark:bg-nts-dark-card px-3 text-sm">
+                <select
+                  value={selectedProject.status}
+                  onChange={(e) => setSelectedProject({ ...selectedProject, status: e.target.value })}
+                  className="w-full h-10 rounded-2xl border border-gray-300 dark:border-border/60 bg-white dark:bg-nts-dark-card px-3 text-sm"
+                >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                   <option value="on_hold">On Hold</option>
@@ -612,11 +669,15 @@ export default function ProjectsPage() {
                     <label key={s._id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-accent cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={(selectedProject.staffIds || []).some((id: any) => (typeof id === "string" ? id : id._id) === s._id)}
+                        checked={(selectedProject.staffIds || []).some((id: any) =>
+                          (typeof id === "string" ? id : id._id) === s._id
+                        )}
                         onChange={() => toggleStaffSelection(s._id, true)}
                         className="rounded border-gray-300"
                       />
-                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-nts-cyan to-nts-blue-magenta flex items-center justify-center text-white text-xs font-bold">{s.name.charAt(0)}</div>
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-br from-nts-cyan to-nts-blue-magenta flex items-center justify-center text-white text-xs font-bold">
+                        {s.name.charAt(0)}
+                      </div>
                       <span className="text-sm">{s.name}</span>
                     </label>
                   ))}
@@ -669,7 +730,7 @@ export default function ProjectsPage() {
           <DialogHeader>
             <DialogTitle>Reassign Project Manager</DialogTitle>
             <DialogDescription>
-              Assign <span className="font-semibold">"{projectToReassign?.title}"</span> to a different manager.
+              Assign <span className="font-semibold">&quot;{projectToReassign?.title}&quot;</span> to a different manager.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-2">
@@ -683,7 +744,9 @@ export default function ProjectsPage() {
                 <SelectTrigger><SelectValue placeholder="Select a manager" /></SelectTrigger>
                 <SelectContent>
                   {managers.map((m) => (
-                    <SelectItem key={m._id} value={m._id}>{m.name} — {m.managerRole || m.department || "Manager"}</SelectItem>
+                    <SelectItem key={m._id} value={m._id}>
+                      {m.name} — {m.managerRole || m.department || "Manager"}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -696,12 +759,16 @@ export default function ProjectsPage() {
               onClick={reassignProject}
               disabled={isReassigningProject || !reassignProjectManagerId}
             >
-              {isReassigningProject ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              {isReassigningProject
+                ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                : <RefreshCw className="w-4 h-4 mr-2" />
+              }
               Reassign
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }
